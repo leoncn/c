@@ -31,9 +31,10 @@
 
 char* nextLine() {
     char *line, buffer[BUF_SZ];
-    int lineSz = 1;
+    int lineSz = 0;
+    int max = lineSz + 1;
 
-    line = malloc(1);
+    line = malloc(max);
 
     if(line == NULL) {
         perror("fail to allocate buffer for a line.");
@@ -43,24 +44,31 @@ char* nextLine() {
     line[0] = '\0';
 
     while(fgets(buffer, BUF_SZ, stdin)) {
-        lineSz += strlen(buffer);
+        int buf_len = strlen(buffer);
+        if(max - lineSz -1 < buf_len) {
+            do {
+                max *= 2;
+            } while(max - lineSz -1 < buf_len);
 
-        line = realloc(line, lineSz);
+            char *nline = realloc(line, max);
 
-        if(line == NULL) {
-            perror("fail to re-allocate buffer for a line.");
-            exit(1);
+            if(nline == NULL) {
+                perror("fail to re-allocate buffer for a line.");
+                exit(1);
+            }
+            line = nline;
         }
 
         strcat(line, buffer);
+        lineSz += buf_len;
 
-        if(lineSz > 1 && line[lineSz-2] == '\n') {
-            // line[lineSz-2] = '\0';
+        if(lineSz > 1 && (line[lineSz-1] == '\n')) {
+            //line[lineSz-2] = '\0';
             break;
         }
     }
 
-    return lineSz == 1 ? NULL : line;
+    return lineSz == 0 ? NULL : line;
 }
 
 int max (int i, int j) {
@@ -137,7 +145,7 @@ int slowCount( char *str) {
 int main(int argc, char **argv) {
     char *line = NULL;
     while( (line =  nextLine()) != NULL) {
-        printf("%d\n",countMaxBlanks(line));
+        printf("%s\n",line);
         free(line);
     }
 
